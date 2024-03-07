@@ -6,6 +6,7 @@ from pytz import timezone
 from math import ceil
 import screeninfo
 
+# Main class to run the app
 class App:
     def __init__(self):
         self.root = customtkinter.CTk()
@@ -15,6 +16,7 @@ class App:
         self.border = False
         self.run()
 
+    # Function to get the information from the API
     def getAPI(self):
         def thread_function():
             # Get the information from the API
@@ -29,10 +31,13 @@ class App:
                 self.map = newMap
                 self.lastRotation = self.time
             
+        # Multithreading to avoid freezing the GUI
         threading.Thread(target = thread_function).start()
 
+    # Function to update the labels with new information
     def updateLabels(self):
         try:
+            # Converting timestamps to minute differences
             eastern = timezone('US/Eastern')
             
             time = eastern.localize(self.time)
@@ -46,25 +51,32 @@ class App:
             rotationDiff = currentTime - lastRotation
             rotationDiff = ceil(rotationDiff.total_seconds() / 60)
 
+            # Updating the labels
             self.labelMapValue.configure(text = self.map)
             self.labelTimeValue.configure(text = f"{timeDiff} minutes ago")
             self.labelRotationValue.configure(text = f"{rotationDiff} minutes ago")
         finally:
+            # If the window is still open, keep updating the informations
             if self.root:
                 self.root.after(1000, self.getAPI)
                 self.root.after(1000, self.updateLabels)
 
+    # Function to close the app
     def closeApp(self):
         self.root.destroy()
 
+    # Function to toggle the border (overrideredirect)
     def toggleBorder(self):
         self.border = not self.border
         self.root.overrideredirect(not self.border)
 
+    # Function to run the app
     def run(self):
+        # Setting the color theme
         customtkinter.set_appearance_mode("dark")
         customtkinter.set_default_color_theme("dark-blue")
 
+        # Getting monitor information
         monitors = screeninfo.get_monitors()
         window_width = 250
         window_height = 210
@@ -76,18 +88,23 @@ class App:
             screen_width = self.root.winfo_screenwidth()
             x = screen_width - window_width 
 
+        # Setting the window position and size
         self.root.geometry(f"{window_width}x{window_height}+{x}+0")
-        self.root.title("Goon tracker")
-        self.root.attributes('-topmost', 1)
         self.root.resizable(False, False)
         self.root.overrideredirect(not self.border)
 
+        # Setting the window properties
+        self.root.title("Goon tracker")
+        self.root.attributes('-topmost', 1)
+        
+        # Buttons to close the app and toggle the border
         self.closeButton = customtkinter.CTkButton(master = self.root, text = "X", command = self.closeApp, width = 20, height = 20, font = ("Arial", 10, "bold"))
         self.closeButton.place(x = window_width - 25, y = 5)
 
         self.toggleButton = customtkinter.CTkButton(master = self.root, text = "!", command = self.toggleBorder, width = 20, height = 20, font = ("Arial", 10, "bold"))
         self.toggleButton.place(x = window_width - 50, y = 5)
 
+        # Labels to show the information
         self.labelTitle = customtkinter.CTkLabel(master = self.root, text = "Goon tracker", font = ("Arial", 20, "bold"))
         self.labelTitle.pack(padx = 20, pady = (10, 0))
 
@@ -112,8 +129,12 @@ class App:
         self.labelRotationValue = customtkinter.CTkLabel(master = self.frame, text = self.lastRotation)
         self.labelRotationValue.grid(row=2, column=1, sticky="w", padx=(0, 20), pady=10)
 
+        # Planning the update functions
         self.root.after(0, self.getAPI)
         self.root.after(1000, self.updateLabels)
+
+        # Running the app
         self.root.mainloop()
 
-App()
+if __name__ == "__main__":
+    App()
