@@ -1,7 +1,7 @@
 import customtkinter
 import requests
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from math import ceil
 import screeninfo
@@ -11,30 +11,44 @@ class App:
         self.root = customtkinter.CTk()
         self.map = "Loading..."
         self.time = "Loading..."
+        self.lastRotation = "Loading..."
         self.border = False
         self.run()
 
     def getAPI(self):
         def thread_function():
-            response = requests.get('https://tarkovpal.com/api')
+            # Get the information from the API
+            response = requests.get('https://tarkovpal.com/api').json()
+    
+            newMap = response['Current Map']
+            
+            self.time = datetime.strptime(str(response['Time']), "['%B %d, %Y, %I:%M %p']")
 
-            json = response.json()
-            self.map = json['Current Map']
-
-            time = datetime.strptime(str(json['Time']), "['%B %d, %Y, %I:%M %p']")
-
-            eastern = timezone('US/Eastern')
-            time = eastern.localize(time)
-            currentTime = datetime.now(eastern)
-            diff = currentTime - time
-            self.time = ceil(diff.total_seconds() / 60)
+            # If the map has changed, update the map and the last rotation time
+            if newMap != self.map:
+                self.map = newMap
+                self.lastRotation = self.time
             
         threading.Thread(target = thread_function).start()
 
     def updateLabels(self):
         try:
+            eastern = timezone('US/Eastern')
+            
+            time = eastern.localize(self.time)
+            lastRotation = eastern.localize(self.lastRotation)
+
+            currentTime = datetime.now(eastern)
+
+            timeDiff = currentTime - time
+            timeDiff = ceil(timeDiff.total_seconds() / 60)
+
+            rotationDiff = currentTime - lastRotation
+            rotationDiff = ceil(rotationDiff.total_seconds() / 60)
+
             self.labelMapValue.configure(text = self.map)
-            self.labelTimeValue.configure(text = f"{self.time} minutes ago")
+            self.labelTimeValue.configure(text = f"{timeDiff} minutes ago")
+            self.labelRotationValue.configure(text = f"{rotationDiff} minutes ago")
         finally:
             if self.root:
                 self.root.after(1000, self.getAPI)
@@ -61,7 +75,7 @@ class App:
             screen_width = self.root.winfo_screenwidth()
             x = screen_width - window_width 
 
-        self.root.geometry(f"{window_width}x180+{x}+0")
+        self.root.geometry(f"{window_width}x220+{x}+0")
         self.root.title("Goon tracker")
         self.root.attributes('-topmost', 1)
         self.root.overrideredirect(not self.border)
@@ -89,6 +103,12 @@ class App:
 
         self.labelTimeValue = customtkinter.CTkLabel(master = self.frame, text = self.time)
         self.labelTimeValue.grid(row=1, column=1, sticky="w", padx=20, pady=10)
+
+        self.labelRotation = customtkinter.CTkLabel(master = self.frame, text = "Rotation:", font = ("Arial", 12, "bold"))
+        self.labelRotation.grid(row=2, column=0, sticky="e", padx=20, pady=10)
+
+        self.labelRotationValue = customtkinter.CTkLabel(master = self.frame, text = self.lastRotation)
+        self.labelRotationValue.grid(row=2, column=1, sticky="w", padx=20, pady=10)
 
         self.root.after(0, self.getAPI)
         self.root.after(1000, self.updateLabels)
