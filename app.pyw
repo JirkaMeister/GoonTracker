@@ -67,6 +67,7 @@ class App:
 
         monitors = screeninfo.get_monitors()
         window_width = 250
+        window_height = 210
         if len(monitors) > 1:
             monitor = monitors[1]
             x = monitor.x + (monitor.width - window_width)
@@ -75,40 +76,41 @@ class App:
             screen_width = self.root.winfo_screenwidth()
             x = screen_width - window_width 
 
-        self.root.geometry(f"{window_width}x220+{x}+0")
+        self.root.geometry(f"{window_width}x{window_height}+{x}+0")
         self.root.title("Goon tracker")
         self.root.attributes('-topmost', 1)
+        self.root.resizable(False, False)
         self.root.overrideredirect(not self.border)
 
         self.closeButton = customtkinter.CTkButton(master = self.root, text = "X", command = self.closeApp, width = 20, height = 20, font = ("Arial", 10, "bold"))
-        self.closeButton.place(x = window_width - 30, y = 10)
+        self.closeButton.place(x = window_width - 25, y = 5)
 
         self.toggleButton = customtkinter.CTkButton(master = self.root, text = "!", command = self.toggleBorder, width = 20, height = 20, font = ("Arial", 10, "bold"))
-        self.toggleButton.place(x = window_width - 55, y = 10)
+        self.toggleButton.place(x = window_width - 50, y = 5)
 
         self.labelTitle = customtkinter.CTkLabel(master = self.root, text = "Goon tracker", font = ("Arial", 20, "bold"))
         self.labelTitle.pack(padx = 20, pady = (10, 0))
 
-        self.frame = customtkinter.CTkFrame(master = self.root)
-        self.frame.pack(pady = 20, padx = 20, fill = "both")
+        self.frame = customtkinter.CTkFrame(master = self.root, fg_color='#1C1C1C')
+        self.frame.pack(pady = (10, 20), padx = 20, fill = "both")
 
         self.labelMap = customtkinter.CTkLabel(master = self.frame, text = "Map:", font = ("Arial", 12, "bold"))
         self.labelMap.grid(row=0, column=0, sticky="e", padx=20, pady=10)
 
         self.labelMapValue = customtkinter.CTkLabel(master = self.frame, text = self.map)
-        self.labelMapValue.grid(row=0, column=1, sticky="w", padx=20, pady=10)
+        self.labelMapValue.grid(row=0, column=1, sticky="w", padx=(0, 20), pady=10)
 
         self.labelTime = customtkinter.CTkLabel(master = self.frame, text = "Time:", font = ("Arial", 12, "bold"))
         self.labelTime.grid(row=1, column=0, sticky="e", padx=20, pady=10)
 
         self.labelTimeValue = customtkinter.CTkLabel(master = self.frame, text = self.time)
-        self.labelTimeValue.grid(row=1, column=1, sticky="w", padx=20, pady=10)
+        self.labelTimeValue.grid(row=1, column=1, sticky="w", padx=(0, 20), pady=10)
 
         self.labelRotation = customtkinter.CTkLabel(master = self.frame, text = "Rotation:", font = ("Arial", 12, "bold"))
         self.labelRotation.grid(row=2, column=0, sticky="e", padx=20, pady=10)
 
         self.labelRotationValue = customtkinter.CTkLabel(master = self.frame, text = self.lastRotation)
-        self.labelRotationValue.grid(row=2, column=1, sticky="w", padx=20, pady=10)
+        self.labelRotationValue.grid(row=2, column=1, sticky="w", padx=(0, 20), pady=10)
 
         self.root.after(0, self.getAPI)
         self.root.after(1000, self.updateLabels)
